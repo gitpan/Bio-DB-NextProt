@@ -4,7 +4,7 @@
       "Felipe da Veiga Leprevost <leprevost@cpan.org>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "ExtUtils::MakeMaker version 6.86, CPAN::Meta::Converter version 2.120351",
+   "generated_by" : "ExtUtils::MakeMaker version 6.86, CPAN::Meta::Converter version 2.133380",
    "license" : [
       "perl_5"
    ],
@@ -32,11 +32,12 @@
       },
       "runtime" : {
          "requires" : {
+            "Net::FTP::Tiny" : "0",
             "REST::Client" : "0",
             "perl" : "5.012"
          }
       }
    },
    "release_status" : "stable",
-   "version" : "0.02"
+   "version" : "0.04"
 }

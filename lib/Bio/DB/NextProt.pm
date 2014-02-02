@@ -141,6 +141,72 @@ Output format maybe in JSON (default), HTML or XML.
 
 	@result = $np->get_protein_cv_info(-query => "PTM-0205", -retrieve => "proteins", -format => "html");
 
+
+=head2 Retrieving Chromosome information
+
+The module also allows the programatic access to chromosome information by accessing and formatting the 
+chr_report tables from the nextprot ftp server.
+The retrieved structure is a hash of hashes, being the first key the Gene Name. 
+The internal hashes have the following values:
+
+* Chromosomal position
+* Start position
+* Stop position 
+* Protein existence
+* Proteomics
+* Antibody
+* 3D
+* Disease
+* Isoforms
+* Variants
+* PTMs
+* Description
+
+This is how the data is representes in the hashes:
+
+    ZSWIM8                   {
+        antibody         "yes",
+        description      "Zinc finger SWIM domain-containing protein 8",
+        disease          "no",
+        existence        "protein level",
+        has_3d           "no",
+        isoforms         5,
+        nextprot_ac      "NX_A7E2V4",
+        position         "10q22.2",
+        proteomics       "yes",
+        ptms             6,
+        start_position   75545340,
+        stop_position    75561551,
+        variants         67
+    }
+
+=head3 Loading the Chromosome table. 
+
+Loas all the information from tha table.
+
+	my %data = $db->get_chromosome(-chromosome => 10);
+
+
+=head3 Accessing Protein information:
+
+	say $data{ZSWIM8}->{isoforms};
+	say $data{ZSWIM8}->{proteomics};
+	say $data{ZSWIM8}->{description};
+
+
+=head3 Counting the number of Proteins in the Chromosome
+
+	$sum = (keys %data);
+	say $sum;		 
+
+
+=head3 Retrieve all Gene Names from a giving Chromosome
+	
+	for my $prot (keys %data) {
+		say $prot;
+	}
+
+
 =head1 FEEDBACK
 
 =head2 Mailing Lists
@@ -179,19 +245,23 @@ Email leprevost@cpan.org
 
 package Bio::DB::NextProt;
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 use strict;
 use warnings;
 use REST::Client;
+use Net::FTP::Tiny qw(ftp_get);
+
+
 sub new {
 	my ($class, @args) = @_;
 	#my $self = $class->SUPER::new(@args);
 	my $self = {};
-	$self->{_client}	= REST::Client->new({host=> "http://www.nextprot.org", timeout => 10,});
-	$self->{_query}		= undef;
-	$self->{_filter}	= undef;
-	$self->{_format}	= "json";
+	$self->{_client}		= REST::Client->new({host=> "http://www.nextprot.org", timeout => 10,});
+	$self->{_query}			= undef;
+	$self->{_filter}		= undef;
+	$self->{_chromosome}	= undef;
+	$self->{_format}		= "json";
 	bless($self, $class);
 	return $self;
 }
@@ -318,6 +388,57 @@ sub get_protein_cv_info() {
     
 	return $self->{_client}->responseContent();
 
+}
+
+sub get_chromosome() {
+	my $self  =	shift;
+	my %param =	@_;
+
+	my @data  = ();
+	my %table = ();
+
+	my $path = "ftp://ftp.nextprot.org/pub/current_release/chr_reports";
+
+	if ( defined $param{'-chromosome'} ) {
+
+		$self->{_chromosome} = $param{'-chromosome'};
+		my $chrom = $self->{_chromosome};
+		my $file = ftp_get($path."/"."nextprot_"."chromosome_".$chrom.".txt");
+		my @data = split /^/m, $file;
+
+		for my $prot (@data) {
+			chomp $prot;
+
+			if ($prot =~ m/^\b[A-Z]+[0-9]+\b/) {
+				
+				$prot =~ s/\s{2,}/\t/g;
+				my @temp = split(/\t/, $prot);
+
+				$table{$temp[0]} = {
+					nextprot_ac     =>  $temp[1],
+					position        =>  $temp[2],
+					start_position  =>  $temp[3],
+					stop_position   =>  $temp[4],
+					existence       =>  $temp[5],
+					proteomics      =>  $temp[6],
+					antibody        =>  $temp[7],
+					has_3d          =>  $temp[8],
+					disease         =>  $temp[9],
+					isoforms        =>  $temp[10],
+					variants        =>  $temp[11],
+					ptms            =>  $temp[12],
+					description     =>  $temp[13],
+				}
+
+			}
+		}
+
+	}
+
+
+	&reset_params();
+
+	return %table;
 }
 
 
