@@ -146,9 +146,10 @@ Output format maybe in JSON (default), HTML or XML.
 
 The module also allows the programatic access to chromosome information by accessing and formatting the 
 chr_report tables from the nextprot ftp server.
-The retrieved structure is a hash of hashes, being the first key the Gene Name. 
+The retrieved structure is a hash of hashes, being the first key the NextProt Accession Number. 
 The internal hashes have the following values:
 
+* Gene Name
 * Chromosomal position
 * Start position
 * Stop position 
@@ -164,14 +165,14 @@ The internal hashes have the following values:
 
 This is how the data is representes in the hashes:
 
-    ZSWIM8                   {
+    NX_A7E2V4                   {
         antibody         "yes",
         description      "Zinc finger SWIM domain-containing protein 8",
         disease          "no",
         existence        "protein level",
         has_3d           "no",
         isoforms         5,
-        nextprot_ac      "NX_A7E2V4",
+        gene_name	     "ZSWIM8",
         position         "10q22.2",
         proteomics       "yes",
         ptms             6,
@@ -245,7 +246,7 @@ Email leprevost@cpan.org
 
 package Bio::DB::NextProt;
 
-our $VERSION = '0.04';
+our $VERSION = '0.06';
 
 use strict;
 use warnings;
@@ -406,16 +407,22 @@ sub get_chromosome() {
 		my $file = ftp_get($path."/"."nextprot_"."chromosome_".$chrom.".txt");
 		my @data = split /^/m, $file;
 
+		use Data::Printer;
+
 		for my $prot (@data) {
 			chomp $prot;
 
-			if ($prot =~ m/^\b[A-Z]+[0-9]+\b/) {
+			if ($prot =~ m/^[A-Za-z|0-9\-]+\s+NX/) {
 				
 				$prot =~ s/\s{2,}/\t/g;
 				my @temp = split(/\t/, $prot);
 
-				$table{$temp[0]} = {
-					nextprot_ac     =>  $temp[1],
+				#if (exists $table{$temp[1]}) {
+				#	print "redundancy detected: $temp[1]\n";
+				#}
+
+				$table{$temp[1]} = {
+					gene_name		=>  $temp[0],
 					position        =>  $temp[2],
 					start_position  =>  $temp[3],
 					stop_position   =>  $temp[4],

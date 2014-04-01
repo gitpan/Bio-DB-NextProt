@@ -19,7 +19,6 @@ WriteMakefile(
     },
     PREREQ_PM => {
 	'REST::Client'		=> 0,
-	'Net::FTP::Tiny'	=> 0,
     },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES => 'Bio-DB-NextProt-*' },
