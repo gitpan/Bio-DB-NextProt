@@ -20,4 +20,4 @@ no_index:
 requires:
   REST::Client: '0'
   perl: '5.012'
-version: '0.06'
+version: '1.00'

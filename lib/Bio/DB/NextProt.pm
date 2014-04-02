@@ -93,6 +93,7 @@ Output format maybe in JSON (default), HTML or XML.
 
 	@result = $np->get_protein_info(-query => "NX_P13051", -retrieve => "expression", -format => "html");
 
+
 =head2 Find information by isoform
 
 =head3 Protein ID
@@ -120,6 +121,7 @@ For each isoform of the specified entry, retrieve all subcellular location.
 
 	@result = $np->get_isoform_info(-query => "NX_P01116-2", -retrieve => "localisation");
 
+
 =head2 Find information by controlled vocabulary term
 
 =head3 Protein ID
@@ -142,7 +144,93 @@ Output format maybe in JSON (default), HTML or XML.
 	@result = $np->get_protein_cv_info(-query => "PTM-0205", -retrieve => "proteins", -format => "html");
 
 
-=head2 Retrieving Chromosome information
+=head2 Retrieving Accession Lists
+
+Allows the retrieval of all accession codes from individual chromossomes or from the entire NextProt database.
+
+	@result = $np->get_accession_list(-chromosome => "10");
+
+	@result = $np->get_accession_list(-chromosome => "all");
+
+=head3 entries with a protein existence "at protein level" (PE 1)
+
+	@result = $np->get_accession_list(-evidence => "protein_level");
+
+=head3 entries with a protein existence "at transcript level" (PE 2)
+
+    @result = $np->get_accession_list(-evidence => "transcript_level");
+
+=head3 entries with a protein existence "by homology" (PE 3)
+
+    @result = $np->get_accession_list(-evidence => "homology");
+
+=head3 entries with a protein existence "predicted" (PE 4)
+
+    @result = $np->get_accession_list(-evidence => "predicted");
+
+=head3 entries with a protein existence "uncertain" (PE 5)
+
+    @result = $np->get_accession_list(-evidence => "uncertain");
+
+
+=head2 Customized Report Files for the HUPO Human Proteome Project (HPP)
+
+
+=head3 Individual report files for each chromosomes (1 to 22, X, Y and MT)
+
+	my @list = $np->get_hpp_report(-chromosome => 10);
+
+=head3 Annotated phosphorylated residues per chromosome
+
+	my @list = $np->get_hpp_report(-phospho => "true");
+
+=head3 Annotated N-Acetyl residues per chromosome
+
+	my @list = $np->get_hpp_report(-nacetyl => "true");
+
+
+=head2 NextProt Mapping
+
+Mapping of neXtProt accession numbers to external resources.
+
+=head3 Ensembl gene identifiers
+
+	@list = $np->get_mapping(-map => "ensembl_gene");
+
+=head3 Ensembl protein identifiers
+
+	@list = $np->get_mapping(-map => "ensembl_protein");
+
+=head3 protein ids that cannot be mapped to any isoform in neXtProt
+
+	@list = $np->get_mapping(-map => "ensembl_unmapped");
+
+=head3 Ensembl transcript identifiers
+
+	@list = $np->get_mapping(-map => "ensembl_transcript");
+
+=head3 transcript is considered as coding by Ensembl that cannot be mapped to any isoform in neXtProt
+
+	@list = $np->get_mapping(-map => "ensembl_transcript_unmapped");
+
+=head3 NCBI GeneID gene accession numbers
+
+	@list = $np->get_mapping(-map => "geneid");
+
+=head3 HGNC gene accession numbers
+
+    @list = $np->get_mapping(-map => "hgnc");
+
+=head3 MGI mouse gene accession numbers
+
+    @list = $np->get_mapping(-map => "mgi");
+
+=head3 NCBI RefSeq gene accession numbers
+
+    @list = $np->get_mapping(-map => "refseq");
+
+
+=head2 Chromosome Report
 
 The module also allows the programatic access to chromosome information by accessing and formatting the 
 chr_report tables from the nextprot ftp server.
@@ -172,7 +260,7 @@ This is how the data is representes in the hashes:
         existence        "protein level",
         has_3d           "no",
         isoforms         5,
-        gene_name	     "ZSWIM8",
+        gene_name        "ZSWIM8",
         position         "10q22.2",
         proteomics       "yes",
         ptms             6,
@@ -185,7 +273,7 @@ This is how the data is representes in the hashes:
 
 Loas all the information from tha table.
 
-	my %data = $db->get_chromosome(-chromosome => 10);
+	my %data = $np->get_chromosome(-chromosome => 10);
 
 
 =head3 Accessing Protein information:
@@ -246,7 +334,7 @@ Email leprevost@cpan.org
 
 package Bio::DB::NextProt;
 
-our $VERSION = '0.06';
+our $VERSION = '1.00';
 
 use strict;
 use warnings;
@@ -391,6 +479,105 @@ sub get_protein_cv_info() {
 
 }
 
+sub get_accession_list() {
+	my $self	= shift;
+	my %param	= @_;
+
+	my $path = "ftp://ftp.nextprot.org/pub/current_release/ac_lists";
+	my @file = ();
+
+	if ( defined $param{'-chromosome'} ) {
+
+		$self->{_chromosome} = $param{'-chromosome'};
+		my $chrom = $self->{_chromosome};
+
+		if ($chrom eq "all") {
+			@file = ftp_get($path."/"."nextprot_ac_list_all.txt");
+		} else {
+			@file = ftp_get($path."/"."nextprot_ac_list_chromosome_".$chrom.".txt");
+		}
+
+	} elsif ( defined $param{'-evidence'} ) {
+
+		if ( $param{'-evidence'} eq "protein_level" ) {
+			@file = ftp_get($path."/"."nextprot_ac_list_PE1_at_protein_level.txt");
+		} elsif ( $param{'-evidence'} eq "transcript_level" ) {
+			@file = ftp_get($path."/"."nextprot_ac_list_PE2_at_transcript_level.txt");
+		} elsif ( $param{'-evidence'} eq "homology" ) {
+			@file = ftp_get($path."/"."nextprot_ac_list_PE3_homology.txt")
+		} elsif ( $param{'-evidence'} eq "predicted" ) {
+			@file = ftp_get($path."/"."nextprot_ac_list_PE4_predicted.txt")
+		} elsif ( $param{'-evidence'} eq "uncertain" ) {
+			@file = ftp_get($path."/"."nextprot_ac_list_PE5_uncertain.txt")
+		}
+	}
+
+	&reset_params();
+	return @file;
+}
+
+
+sub get_hpp_report() {
+	my $self	= shift;
+	my %param	= @_;
+
+	my $path = "ftp://ftp.nextprot.org/pub/current_release/custom/hpp";
+	my @file = ();
+
+	if ( defined $param{'-chromosome'} ) {
+
+    	my $chrom = $param{'-chromosome'};
+		@file = ftp_get($path."/"."HPP_chromosome_".$chrom.".txt");
+
+	} elsif ( defined $param{'-phospho'} ) {
+		@file = ftp_get($path."/"."HPP_entries_with_phospho_by_chromosome.txt");
+	} elsif ( defined $param{'-nacetyl'} ) {
+		@file = ftp_get($path."/"."HPP_entries_with_nacetyl_by_chromosome.txt");
+	}
+
+	&reset_params();
+	return @file;
+		
+}
+
+
+sub get_mapping() {
+	my $self	= shift;
+	my %param	= @_;
+
+	my $path = "ftp://ftp.nextprot.org/pub/current_release/mapping";
+	my @file = ();
+
+	if ( defined $param{'-map'} ) {
+		my $db = $param{'-map'};
+
+		if ( $db eq 'ensembl_gene' ) {
+			@file = ftp_get($path."/"."nextprot_ensg.txt");
+		} elsif ( $db eq 'ensembl_protein' ) {
+			@file = ftp_get($path."/"."nextprot_ensp.txt");
+		} elsif ( $db eq 'ensembl_unmapped' ) {
+			@file = ftp_get($path."/"."nextprot_ensp_unmapped.txt");
+		} elsif ( $db eq 'ensembl_transcript' ) {
+			@file = ftp_get($path."/"."nextprot_enst.txt");
+		} elsif ( $db eq 'ensembl_transcript_unmapped' ) {
+			@file = ftp_get($path."/"."nextprot_enst_unmapped.txt");
+		} elsif ( $db eq 'geneid' ) {
+			@file = ftp_get($path."/"."nextprot_geneid.txt");
+		} elsif ( $db eq 'hgnc' ) {
+			@file = ftp_get($path."/"."nextprot_hgnc.txt");
+		} elsif ( $db eq 'mgi' ) {
+			@file = ftp_get($path."/"."nextprot_mgi.txt");
+		} elsif ( $db eq 'refseq' ) {
+			@file = ftp_get($path."/"."nextprot_refseq.txt");
+		}
+	}
+	
+	&reset_params();
+	return @file;
+
+}
+
+
 sub get_chromosome() {
 	my $self  =	shift;
 	my %param =	@_;
@@ -406,8 +593,6 @@ sub get_chromosome() {
 		my $chrom = $self->{_chromosome};
 		my $file = ftp_get($path."/"."nextprot_"."chromosome_".$chrom.".txt");
 		my @data = split /^/m, $file;
-
-		use Data::Printer;
 
 		for my $prot (@data) {
 			chomp $prot;
