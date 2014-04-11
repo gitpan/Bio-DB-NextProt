@@ -334,7 +334,7 @@ Email leprevost@cpan.org
 
 package Bio::DB::NextProt;
 
-our $VERSION = '1.00';
+our $VERSION = '1.02';
 
 use strict;
 use warnings;
