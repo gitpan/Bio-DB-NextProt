@@ -1,24 +1,24 @@
---- #YAML:1.0
-name:               Bio-DB-NextProt
-version:            1.02
-abstract:           Object interface to NextProt REST API.
+---
+abstract: 'Object interface to NextProt REST API.'
 author:
-    - Felipe da Veiga Leprevost <leprevost@cpan.org>
-license:            perl
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
+  - 'Felipe da Veiga Leprevost <leprevost@cpan.org>'
 build_requires:
-    Net::FTP::Tiny:  0
-    Test::More:      0
-requires:
-    perl:          5.012
-    REST::Client:  0
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.57_05
+  Net::FTP::Tiny: '0'
+  Test::More: '0'
+configure_requires:
+  ExtUtils::MakeMaker: '0'
+dynamic_config: 1
+generated_by: 'ExtUtils::MakeMaker version 6.98, CPAN::Meta::Converter version 2.142060'
+license: perl
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: Bio-DB-NextProt
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  REST::Client: '0'
+  perl: '5.012'
+version: '1.04'
