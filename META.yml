@@ -1,5 +1,5 @@
 ---
-abstract: 'Object interface to NextProt REST API.'
+abstract: 'Object interface to neXtProt REST API.'
 author:
   - 'Felipe da Veiga Leprevost <leprevost@cpan.org>'
 build_requires:
@@ -21,4 +21,8 @@ no_index:
 requires:
   REST::Client: '0'
   perl: '5.012'
-version: '1.04'
+resources:
+  bugtracker: http://rt.cpan.org/NoAuth/Bugs.html?Dist=Bio-DB-NextProt
+  homepage: https://github.com/Leprevost/Bio-DB-NextProt
+  repository: https://github.com/Leprevost/Bio-DB-NextProt.git
+version: '1.05'
